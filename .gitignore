@@ -1,0 +1,41 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET
+**/bin/
+**/obj/
+
+# ASP.NET development certificates
+*.pfx
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+**/node_modules/
+**/dist/
+
+# Vite
+**/.vite/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+*.trx

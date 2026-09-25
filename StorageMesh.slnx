@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="storagemesh.client/storagemesh.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="StorageMesh.Server/StorageMesh.Server.csproj" />
+</Solution>

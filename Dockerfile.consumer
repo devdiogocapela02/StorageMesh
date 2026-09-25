@@ -1,0 +1,27 @@
+FROM node:22-bookworm
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y wget \
+    && wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
+    && rm /tmp/dotnet-install.sh \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY StorageMesh.Server/StorageMesh.Server.csproj /app/StorageMesh.Server/
+RUN dotnet restore /app/StorageMesh.Server/StorageMesh.Server.csproj
+
+WORKDIR /app/storagemesh.client
+
+COPY storagemesh.client/package*.json ./
+RUN npm install
+
+COPY storagemesh.client/ .
+
+EXPOSE 8080
+EXPOSE 5173
+
+CMD ["sh", "-c", "dotnet run --project /app/StorageMesh.Server/StorageMesh.Server.csproj --urls http://0.0.0.0:8080 & npm run dev -- --host 0.0.0.0 --port 5173"]
