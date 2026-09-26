@@ -40,7 +40,6 @@ services:
     volumes:
       - ./config/node4.json:/app/StorageMesh.Server/node.json:ro
       - node4-data:/app/data
-      - ./StorageMesh.Server:/app/StorageMesh.Server
       - ./storageMesh.client:/app/storagemesh.client
       - node4-node-modules:/app/storagemesh.client/node_modules
 volumes:

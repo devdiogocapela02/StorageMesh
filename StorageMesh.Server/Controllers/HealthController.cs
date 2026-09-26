@@ -18,8 +18,8 @@ namespace StorageMesh.Server.Controllers
         {
             return Ok(new
             {
-                nodeId = _configuration["Node:Id"],
-                type = _configuration["Node:type"],
+                nodeId = _configuration["NodeId"],
+                type = _configuration["NodeType"],
                 status = "healthy"
             });
         }

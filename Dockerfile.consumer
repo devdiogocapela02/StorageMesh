@@ -14,6 +14,8 @@ RUN apt-get update \
 COPY StorageMesh.Server/StorageMesh.Server.csproj /app/StorageMesh.Server/
 RUN dotnet restore /app/StorageMesh.Server/StorageMesh.Server.csproj
 
+COPY StorageMesh.Server/ /app/StorageMesh.Server/
+
 WORKDIR /app/storagemesh.client
 
 COPY storagemesh.client/package*.json ./

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StorageMesh.Server.Data;
+using StorageMesh.Server.Middleware;
 using StorageMesh.Server.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,33 +17,34 @@ var databasePath = Path.Combine(
 builder.Services.AddDbContext<StorageMeshDbContext>(options =>
     options.UseSqlite($"Data Source=../data/storagemesh.db"));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Vue", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
+app.UseCors("Vue");
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<StorageMeshDbContext>();
-
-    if (!db.LocalFiles.Any())
+    db.Database.Migrate();
+    db.NodeEvents.Add(new NodeEvent
     {
-        db.LocalFiles.AddRange(
-            new LocalFile
-            {
-                FileKey = "test-1.txt",
-                StoredAt = "../data/test-1.txt"
-            },
-            new LocalFile
-            {
-                FileKey = "missing.txt",
-                StoredAt = "../data/missing.txt"
-            }
-        );
-
-        db.SaveChanges();
-    }
+        NodeId = builder.Configuration["Node:Id"] ?? "unknown",
+        EventType = "started",
+        OccurredAt = DateTime.UtcNow
+    });
+    db.SaveChanges();
 }
 
+app.UseMiddleware<NodeMiddleware>();
 app.MapControllers();
 
 app.Run();
