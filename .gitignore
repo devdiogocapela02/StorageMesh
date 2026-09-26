@@ -39,3 +39,7 @@ Thumbs.db
 # Test results
 TestResults/
 *.trx
+
+#data folder
+
+**/data
