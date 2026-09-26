@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StorageMesh.Server.Data;
 using StorageMesh.Server.Middleware;
+using StorageMesh.Server.Models;
 
 namespace StorageMesh.Server.Controllers;
 
@@ -7,10 +9,26 @@ namespace StorageMesh.Server.Controllers;
 [Route("api/control")]
 public class ControlController : ControllerBase
 {
-    [HttpPost("on")]
-    public IActionResult TurnOn()
+    private readonly StorageMeshDbContext _db;
+
+    public ControlController(StorageMeshDbContext db)
     {
+        _db = db;
+    }
+
+    [HttpPost("on")]
+    public async Task<IActionResult> TurnOn()
+    {
+        _db.NodeEvents.Add(new NodeEvent
+        {
+            NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown",
+            EventType = "received_on",
+            OccurredAt = DateTime.UtcNow
+        });
+
         NodeMiddleware.Enabled = true;
+
+        await _db.SaveChangesAsync();
 
         return Ok(new
         {
@@ -19,10 +37,18 @@ public class ControlController : ControllerBase
     }
 
     [HttpPost("off")]
-    public IActionResult TurnOff()
+    public async Task<IActionResult> TurnOff()
     {
+        _db.NodeEvents.Add(new NodeEvent
+        {
+            NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown",
+            EventType = "received_off",
+            OccurredAt = DateTime.UtcNow
+        });
+
         NodeMiddleware.Enabled = false;
 
+        await _db.SaveChangesAsync();
         return Ok(new
         {
             status = "offline"
