@@ -28,6 +28,16 @@ async function loadDashboard() {
   await Promise.all([loadFiles(), loadNodes()]);
 }
 
+async function setNodeStatus(node, enabled) {
+  const endpoint = enabled ? "on" : "off";
+
+  await fetch(`http://localhost:5004/api/nodes/${node.id}/${endpoint}`, {
+    method: "POST",
+  });
+
+  await loadNodes();
+}
+
 onMounted(() => {
   loadDashboard();
 
@@ -46,6 +56,12 @@ onMounted(() => {
         <div v-for="node in nodes" :key="node.id" class="node" :class="node.status">
           <strong>{{ node.id }}</strong>
           <span>{{ node.status }}</span>
+
+          <button v-if="node.status === 'online'" @click="setNodeStatus(node, false)">
+            Turn Off
+          </button>
+
+          <button v-else @click="setNodeStatus(node, true)">Turn On</button>
         </div>
       </div>
     </section>

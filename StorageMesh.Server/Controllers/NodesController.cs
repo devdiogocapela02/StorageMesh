@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StorageMesh.Server.Data;
 using Microsoft.EntityFrameworkCore;
+using StorageMesh.Server.Data;
 using StorageMesh.Server.Models;
+using System.Text.Json;
 
 namespace StorageMesh.Server.Controllers;
 
@@ -39,7 +40,11 @@ public class NodesController : ControllerBase
             try
             {
                 var response = await http.GetAsync($"{url}/health");
-                online = response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    online = json.GetProperty("enabled").GetBoolean();
+                }
             }
             catch
             {
@@ -73,5 +78,59 @@ public class NodesController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpPost("{id}/off")]
+    public async Task<IActionResult> TurnOff(string id)
+    {
+        var node = _configuration
+            .GetSection("Nodes")
+            .GetChildren()
+            .FirstOrDefault(node => node["Id"] == id);
+
+        if (node == null)
+            return NotFound();
+
+        using var http = new HttpClient();
+
+        var response = await http.PostAsync(
+            $"{node["Url"]}/api/control/off",
+            null);
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode);
+
+        return Ok(new
+        {
+            id,
+            status = "offline"
+        });
+    }
+
+    [HttpPost("{id}/on")]
+    public async Task<IActionResult> TurnOn(string id)
+    {
+        var node = _configuration
+            .GetSection("Nodes")
+            .GetChildren()
+            .FirstOrDefault(node => node["Id"] == id);
+
+        if (node == null)
+            return NotFound();
+
+        using var http = new HttpClient();
+
+        var response = await http.PostAsync(
+            $"{node["Url"]}/api/control/on",
+            null);
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode);
+
+        return Ok(new
+        {
+            id,
+            status = "online"
+        });
     }
 }

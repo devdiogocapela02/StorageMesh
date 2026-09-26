@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using StorageMesh.Server.Middleware;
 
 namespace StorageMesh.Server.Controllers
 {
@@ -18,9 +19,10 @@ namespace StorageMesh.Server.Controllers
         {
             return Ok(new
             {
-                nodeId = _configuration["NodeId"],
-                type = _configuration["NodeType"],
-                status = "healthy"
+                nodeId = _configuration["Node:Id"],
+                type = _configuration["Node:type"],
+                status = "healthy",
+                enabled = NodeMiddleware.Enabled
             });
         }
     }
