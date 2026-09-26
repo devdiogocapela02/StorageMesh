@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StorageMesh.Server.Data;
 
@@ -10,9 +11,11 @@ using StorageMesh.Server.Data;
 namespace StorageMesh.Server.Migrations
 {
     [DbContext(typeof(StorageMeshDbContext))]
-    partial class StorageMeshDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926025513_AddKnownNodes")]
+    partial class AddKnownNodes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");

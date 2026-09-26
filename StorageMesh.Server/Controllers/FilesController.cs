@@ -31,10 +31,13 @@ public class FilesController : ControllerBase
 
         return Ok(files);
     }
+
+
     [HttpPost("upload")]
     public async Task<IActionResult> Upload(IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("No file supplied");
+        _db.NodeEvents.Add(new NodeEvent { NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown", EventType = "received_upload", Detail = file.FileName, OccurredAt = DateTime.UtcNow });
 
         var path = Path.Combine("../data", file.FileName);
 
@@ -49,17 +52,39 @@ public class FilesController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        var nodes = _configuration.GetSection("Nodes").GetChildren();
+        var nodes = await _db.KnownNodes.ToListAsync();
         using var http = new HttpClient();
 
         foreach(var node in nodes)
         {
-            using var content = new MultipartFormDataContent();
-            using var filestream = System.IO.File.OpenRead(path);
-            content.Add(new StreamContent(filestream), "file", file.FileName);
+            try
+            {
 
-            await http.PostAsync($"{node["Url"]}/api/files/store", content);
+                using var content = new MultipartFormDataContent();
+                using var filestream = System.IO.File.OpenRead(path);
+                content.Add(new StreamContent(filestream), "file", file.FileName);
+                var response = await http.PostAsync($"{node.Url}/api/files/store", content);
+                _db.NodeEvents.Add(new NodeEvent
+                {
+                    NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown",
+                    EventType = response.IsSuccessStatusCode ? "replicated" : "replication_failed",
+                    Detail = $"{file.FileName} → {node.Id}",
+                    OccurredAt = DateTime.UtcNow
+                });
+            }
+            catch
+            {
+                _db.NodeEvents.Add(new NodeEvent
+                {
+                    NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown",
+                    EventType = "replication_failed",
+                    Detail = $"{file.FileName} → {node.Id}",
+                    OccurredAt = DateTime.UtcNow
+                });
+            }
         }
+
+    await _db.SaveChangesAsync();
 
         return Ok(new { file = file.FileName });
     }
@@ -68,6 +93,7 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> Store(IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("No file supplied");
+        _db.NodeEvents.Add(new NodeEvent { NodeId = HttpContext.Items["NodeId"]?.ToString() ?? "unknown", EventType = "stored_file", Detail = file.FileName, OccurredAt = DateTime.UtcNow });
 
         var path = Path.Combine("../data", file.FileName);
 
@@ -85,4 +111,13 @@ public class FilesController : ControllerBase
         return Ok(new { file = file.FileName });
     }
 
+    [HttpGet("{fileKey}")]
+    public IActionResult GetFile(string fileKey)
+    {
+        var path = Path.Combine("../data", fileKey);
+
+        if (!System.IO.File.Exists(path)) return NotFound();
+
+        return PhysicalFile(Path.GetFullPath(path), "application/octet-stream", fileKey);
+    }
 }

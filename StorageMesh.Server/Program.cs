@@ -41,6 +41,20 @@ using (var scope = app.Services.CreateScope())
         EventType = "started",
         OccurredAt = DateTime.UtcNow
     });
+    var nodes = builder.Configuration.GetSection("Nodes").GetChildren();
+
+    foreach (var node in nodes)
+    {
+        if (!db.KnownNodes.Any(n => n.Id == node["Id"]))
+        {
+            db.KnownNodes.Add(new KnownNode
+            {
+                Id = node["Id"]!,
+                Url = node["Url"]!
+            });
+        }
+    }
+
     db.SaveChanges();
 }
 

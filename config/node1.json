@@ -1,6 +1,12 @@
 {
   "Node": {
     "Id": "node1",
-    "Type":  "node"
-  }
+    "Type": "Node"
+  },
+  "Nodes": [
+    {
+      "Id": "node3",
+      "Url": "http://node3:8080"
+    }
+  ]
 }
