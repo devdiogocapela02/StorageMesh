@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using StorageMesh.Server.Data;
 using StorageMesh.Server.Middleware;
 using StorageMesh.Server.Models;
+using StorageMesh.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +30,12 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<NodeSyncService>();
+builder.Services.AddHostedService<NodeSyncBackgroundService>();
+
+
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 app.UseCors("Vue");
 using (var scope = app.Services.CreateScope())
 {
@@ -41,6 +47,9 @@ using (var scope = app.Services.CreateScope())
         EventType = "started",
         OccurredAt = DateTime.UtcNow
     });
+    logger.LogInformation(
+    "[{NodeId}] started",
+    builder.Configuration["Node:Id"] ?? "unknown");
     var nodes = builder.Configuration.GetSection("Nodes").GetChildren();
 
     foreach (var node in nodes)
