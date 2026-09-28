@@ -1,8 +1,8 @@
-﻿using System.Xml.Linq;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StorageMesh.Server.Data;
 using StorageMesh.Server.Models;
+using StorageMesh.Server.Services;
 
 namespace StorageMesh.Server.Controllers;
 
@@ -12,6 +12,8 @@ public class FilesController : ControllerBase
 {
     private readonly StorageMeshDbContext _db;
     private readonly IConfiguration _configuration;
+
+    private readonly NodeSyncService _sync;
     private readonly ILogger<FilesController> _logger;
 
     private const long MaxFileSize = 5 * 1024 * 1024;
@@ -22,12 +24,14 @@ public class FilesController : ControllerBase
     public FilesController(
         StorageMeshDbContext db,
         IConfiguration configuration,
-        ILogger<FilesController> logger
+        ILogger<FilesController> logger,
+        NodeSyncService sync
     )
     {
         _db = db;
         _configuration = configuration;
         _logger = logger;
+        _sync = sync;
     }
 
     [HttpGet]
@@ -58,7 +62,9 @@ public class FilesController : ControllerBase
         if (file.Length > MaxFileSize)
             return BadRequest("File exceeds the 5 MB limit.");
 
-        var dataPath = Path.GetFullPath("../data");
+        var dataPath = Path.GetFullPath("../data/storage");
+
+        await _sync.Sync();
 
         var currentSize = Directory
             .GetFiles(dataPath, "*", SearchOption.TopDirectoryOnly)
@@ -77,7 +83,7 @@ public class FilesController : ControllerBase
             }
         );
 
-        var path = Path.Combine("../data", file.FileName);
+        var path = Path.Combine("../data/storage", file.FileName);
 
         await using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write))
         {
@@ -160,7 +166,7 @@ public class FilesController : ControllerBase
             }
         );
 
-        var path = Path.Combine("../data", file.FileName);
+        var path = Path.Combine("../data/storage", file.FileName);
 
         await using (var stream = new FileStream(path, FileMode.Create, FileAccess.Write))
         {
@@ -179,12 +185,30 @@ public class FilesController : ControllerBase
     [HttpGet("{fileKey}")]
     public IActionResult GetFile(string fileKey)
     {
-        var path = Path.Combine("../data", fileKey);
+        var path = Path.Combine("../data/storage", fileKey);
 
         if (!System.IO.File.Exists(path))
             return NotFound();
 
         return PhysicalFile(Path.GetFullPath(path), "application/octet-stream", fileKey);
+    }
+
+    [HttpDelete("{fileKey}")]
+    public async Task<IActionResult> DeleteFile(string fileKey)
+    {
+        var file = await _db.LocalFiles.FindAsync(fileKey);
+
+        if (file == null)
+            return NotFound();
+
+        if (System.IO.File.Exists(file.StoredAt))
+            System.IO.File.Delete(file.StoredAt);
+
+        _db.LocalFiles.Remove(file);
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
     }
 
     [HttpDelete("{fileKey}/physical")]
@@ -241,7 +265,7 @@ public class FilesController : ControllerBase
     [HttpGet("{fileKey}/fetch")]
     public async Task<IActionResult> FetchFile(string fileKey)
     {
-        var path = Path.Combine("../data", fileKey);
+        var path = Path.Combine("../data/storage", fileKey);
 
         if (System.IO.File.Exists(path))
             return PhysicalFile(Path.GetFullPath(path), "application/octet-stream", fileKey);

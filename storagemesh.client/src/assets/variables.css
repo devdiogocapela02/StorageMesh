@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap");
+
+:root {
+  --font-body: "Space Mono", monospace;
+  --font-heading: "Share Tech Mono", monospace;
+  /* Light theme */
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-secondary: #f1f1ee;
+  --disabled-bg: #f5f2df;
+
+  --border: #e2e2de;
+
+  --text: #1c1c1a;
+  --text-inverse: #f1f1ed;
+  --text-secondary: #686863;
+  --text-muted: #969690;
+
+  /* Brand */
+  --accent: #d66a4c;
+  --accent-hover: #c65b40;
+  --accent-soft: #f7e3dd;
+
+  /* Status */
+  --status-draft: #858585;
+  --status-sent: #d66a4c;
+  --status-accepted: #5d966b;
+  --status-rejected: #c85b5b;
+
+  /* Status backgrounds */
+  --status-draft-bg: #eeeeec;
+  --status-sent-bg: #f7e3dd;
+  --status-accepted-bg: #e3f0e6;
+  --status-rejected-bg: #f4e1e1;
+
+  /* General */
+  --radius: 8px;
+  --transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --bg: #171716;
+  --surface: #20201e;
+  --surface-secondary: #282825;
+  --disabled-bg: #261f16;
+
+  --border: #353531;
+
+  --text: #f1f1ed;
+  --text-inverse: #1c1c1a;
+  --text-secondary: #a5a59e;
+  --text-muted: #777771;
+
+  --accent: #e0785c;
+  --accent-hover: #eb896d;
+  --accent-soft: #3a2722;
+
+  --status-draft: #999994;
+  --status-sent: #e0785c;
+  --status-accepted: #72a77e;
+  --status-rejected: #dc6a6a;
+
+  --status-draft-bg: #30302d;
+  --status-sent-bg: #3a2722;
+  --status-accepted-bg: #26382b;
+  --status-rejected-bg: #3a2727;
+}

@@ -125,12 +125,24 @@ public class NodesController : ControllerBase
     [HttpPost("{id}/off")]
     public async Task<IActionResult> TurnOff(string id)
     {
-        var node = await _db.KnownNodes.FirstOrDefaultAsync(node => node.Id == id);
+        var node = await _db.KnownNodes
+            .FirstOrDefaultAsync(node => node.Id == id);
 
         if (node == null)
             return NotFound();
 
         using var http = new HttpClient();
+
+        var healthResponse = await http.GetAsync($"{node.Url}/health");
+
+        if (!healthResponse.IsSuccessStatusCode)
+            return StatusCode((int)healthResponse.StatusCode);
+
+        var health = await healthResponse.Content
+            .ReadFromJsonAsync<JsonElement>();
+
+        if (health.GetProperty("type").GetString() == "Consumer")
+            return BadRequest("Consumer nodes cannot be controlled.");
 
         var response = await http.PostAsync(
             $"{node.Url}/api/control/off",
@@ -156,6 +168,17 @@ public class NodesController : ControllerBase
 
         using var http = new HttpClient();
 
+        var healthResponse = await http.GetAsync($"{node.Url}/health");
+
+        if (!healthResponse.IsSuccessStatusCode)
+            return StatusCode((int)healthResponse.StatusCode);
+
+        var health = await healthResponse.Content
+            .ReadFromJsonAsync<JsonElement>();
+
+        if (health.GetProperty("type").GetString() == "Consumer")
+            return BadRequest("Consumer nodes cannot be controlled.");
+
         var response = await http.PostAsync(
             $"{node.Url}/api/control/on",
             null);
@@ -174,5 +197,78 @@ public class NodesController : ControllerBase
     public async Task<IActionResult> GetKnownNodes()
     {
         return Ok(await _db.KnownNodes.ToListAsync());
+    }
+
+    [HttpDelete("{id}/files/{fileKey}")]
+    public async Task<IActionResult> DeleteFile(string id, string fileKey)
+    {
+        var node = await _db.KnownNodes
+    .FirstOrDefaultAsync(node => node.Id == id);
+
+        if (node == null)
+            return NotFound();
+
+        using var http = new HttpClient();
+
+        var healthResponse = await http.GetAsync($"{node.Url}/health");
+
+        if (!healthResponse.IsSuccessStatusCode)
+            return StatusCode((int)healthResponse.StatusCode);
+
+        var health = await healthResponse.Content
+            .ReadFromJsonAsync<JsonElement>();
+
+        if (health.GetProperty("type").GetString() == "Consumer")
+            return BadRequest("Consumer nodes cannot be controlled.");
+
+        var response = await http.DeleteAsync(
+            $"{node.Url}/api/files/{Uri.EscapeDataString(fileKey)}");
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode);
+
+        return NoContent();
+    }
+
+    [HttpDelete("files/{fileKey}/everywhere")]
+    public async Task<IActionResult> DeleteFileEverywhere(string fileKey)
+    {
+        var nodes = await _db.KnownNodes.ToListAsync();
+
+        using var http = new HttpClient();
+
+        // Delete our own local copy first
+        var localPath = Path.Combine(
+            "../data/storage",
+            fileKey);
+
+        if (System.IO.File.Exists(localPath))
+            System.IO.File.Delete(localPath);
+
+        var localFile = await _db.LocalFiles.FindAsync(fileKey);
+
+        if (localFile != null)
+            _db.LocalFiles.Remove(localFile);
+
+        // Delete from every known remote node
+        foreach (var node in nodes)
+        {
+            if (node.Id == HttpContext.Items["NodeId"]?.ToString())
+                continue;
+
+            try
+            {
+                await http.DeleteAsync(
+                    $"{node.Url}/api/files/{Uri.EscapeDataString(fileKey)}");
+            }
+            catch
+            {
+                // Node may currently be unavailable.
+            }
+        }
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
     }
 }

@@ -9,14 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile(
     "node.json", optional: true, reloadOnChange: false);
 
-var databasePath = Path.Combine(
-    builder.Environment.ContentRootPath,
-    "..",
-    "data",
-    "storagemesh.db");
+Directory.CreateDirectory("../data/db");
+Directory.CreateDirectory("../data/storage");
 
 builder.Services.AddDbContext<StorageMeshDbContext>(options =>
-    options.UseSqlite($"Data Source=../data/storagemesh.db"));
+    options.UseSqlite("Data Source=../data/db/storagemesh.db"));
 
 builder.Services.AddCors(options =>
 {
