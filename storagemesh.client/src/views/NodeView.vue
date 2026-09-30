@@ -10,12 +10,9 @@ const route = useRoute();
 const node = computed(() => network.value.find((node) => node.id === route.params.id));
 
 async function deleteFile(node, fileKey) {
-  const response = await fetch(
-    `http://localhost:5004/api/nodes/${node.id}/files/${encodeURIComponent(fileKey)}`,
-    {
-      method: "DELETE",
-    },
-  );
+  const response = await fetch(`/api/nodes/${node.id}/files/${encodeURIComponent(fileKey)}`, {
+    method: "DELETE",
+  });
 
   if (!response.ok) {
     alert("File could not be deleted.");
@@ -26,7 +23,7 @@ async function deleteFile(node, fileKey) {
 }
 
 async function loadNetwork() {
-  const response = await fetch("http://localhost:5004/api/network");
+  const response = await fetch("/api/network");
   if (response.ok) network.value = await response.json();
 }
 </script>

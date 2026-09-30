@@ -6,7 +6,7 @@ import "@/assets/variables.css";
 import "@/assets/tables.css";
 
 async function loadNetwork() {
-  const response = await fetch("http://localhost:5004/api/network");
+  const response = await fetch("/api/network");
   if (response.ok) network.value = await response.json();
 }
 

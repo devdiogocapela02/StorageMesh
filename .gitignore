@@ -43,3 +43,6 @@ TestResults/
 #data folder
 
 **/data
+Dockerfile.consumerold
+Dockerfile.old
+oldcompose.yaml

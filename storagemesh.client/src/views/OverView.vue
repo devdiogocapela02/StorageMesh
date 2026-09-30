@@ -10,23 +10,23 @@ const knownnodes = ref([]);
 const nodes = ref([]);
 
 async function loadFiles() {
-  const response = await fetch("http://localhost:5004/api/files");
+  const response = await fetch("/api/files");
 
   files.value = await response.json();
 }
 
 async function loadEvents() {
-  const response = await fetch("http://localhost:5004/api/events");
+  const response = await fetch("/api/events");
   events.value = await response.json();
 }
 
 async function loadKnownNodes() {
-  const response = await fetch("http://localhost:5004/api/knownnodes");
+  const response = await fetch("/api/knownnodes");
   knownnodes.value = await response.json();
 }
 
 async function loadNodes() {
-  const response = await fetch("http://localhost:5004/api/nodes");
+  const response = await fetch("/api/nodes");
   nodes.value = await response.json();
 }
 
@@ -60,7 +60,7 @@ async function uploadFile() {
   const formdata = new FormData();
   formdata.append("file", file);
 
-  const response = await fetch("http://localhost:5004/api/files/upload", {
+  const response = await fetch("/api/files/upload", {
     method: "POST",
     body: formdata,
   });
@@ -75,24 +75,21 @@ async function uploadFile() {
 }
 
 async function loadNetwork() {
-  const response = await fetch("http://localhost:5004/api/network");
+  const response = await fetch("/api/network");
   if (response.ok) network.value = await response.json();
 }
 
 async function setNodeStatus(node) {
   const endpoint = node.health.enabled ? "off" : "on";
-  await fetch(`http://localhost:5004/api/nodes/${node.id}/${endpoint}`, { method: "POST" });
+  await fetch(`/api/nodes/${node.id}/${endpoint}`, { method: "POST" });
   await loadNetwork();
   await loadNodes();
 }
 
 async function deleteFile(fileKey) {
-  const response = await fetch(
-    `http://localhost:5004/api/files/${encodeURIComponent(fileKey)}/physical`,
-    {
-      method: "DELETE",
-    },
-  );
+  const response = await fetch(`/api/files/${encodeURIComponent(fileKey)}/physical`, {
+    method: "DELETE",
+  });
 
   if (!response.ok) {
     alert("File could not be deleted.");
@@ -104,12 +101,9 @@ async function deleteFile(fileKey) {
 }
 
 async function deleteForever(fileKey) {
-  const response = await fetch(
-    `http://localhost:5004/api/nodes/files/${encodeURIComponent(fileKey)}/everywhere`,
-    {
-      method: "DELETE",
-    },
-  );
+  const response = await fetch(`/api/nodes/files/${encodeURIComponent(fileKey)}/everywhere`, {
+    method: "DELETE",
+  });
 
   if (!response.ok) {
     alert("File could not be deleted.");
